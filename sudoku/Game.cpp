@@ -1,8 +1,9 @@
 #include "Game.h"
 
+#include <fstream>
+#include <map>
+#include "string"
 
-SDL_Texture *texture;
-SDL_Rect dRect;
 
 void Game::init(const char *title, int width, int height) {
     if(SDL_Init(SDL_INIT_EVERYTHING) == 0) {
@@ -15,22 +16,17 @@ void Game::init(const char *title, int width, int height) {
         gameIsRunning = false;
         return;
     }
-
-    //TODO: figure out the issue with "Couldn't open"
-    //SDL_Surface* tmpSurf = IMG_Load("assets/one.png");
-    SDL_Surface* tmpSurf = IMG_Load("/home/ganymede/CLionProjects/cpp-learning-projects/sudoku/assets/five.png");
-
-    if(!tmpSurf) {
-        std::cerr << "Failed to load img: " << SDL_GetError() << std::endl;
-    }
-    texture = SDL_CreateTextureFromSurface(rend, tmpSurf);
-    SDL_FreeSurface(tmpSurf);
+    genGameMap();
+    std::cout << "Game successfully init" << std::endl;
 }
 
 void Game::clear() {
     SDL_DestroyWindow(win);
     SDL_DestroyRenderer(rend);
     SDL_Quit();
+    for (int i = 0; i < 81; ++i) {
+        SDL_DestroyTexture(textures[i]);
+    }
 }
 
 void Game::handleEvents() {
@@ -47,13 +43,32 @@ void Game::handleEvents() {
 }
 
 void Game::update() {
-    dRect.w = 32;
-    dRect.h = 32;
+    int x_pos = 0;
+    int y_pos = 0;
+
+    for (int i = 0; i < 81; ++i) {
+        if (i % 9 == 0 && i != 0) {
+            x_pos = 0;
+            y_pos += 50;
+        }
+
+        rects[i]->w = 50;
+        rects[i]->h = 50;
+
+        rects[i]->x = x_pos;
+        rects[i]->y = y_pos;
+
+        x_pos += 50;
+    }
 }
 
 void Game::render() {
     SDL_RenderClear(rend);
-    SDL_RenderCopy(rend, texture, nullptr, &dRect);
+
+    for (int i = 0; i < 81; ++i) {
+        SDL_RenderCopy(rend, textures[i], nullptr, rects[i]);
+    }
+
     SDL_RenderPresent(rend);
 }
 
@@ -61,17 +76,58 @@ bool Game::isRunning() const {
     return gameIsRunning;
 }
 
-//void Game::loadSudokuMap(char *filePath, char gameMap[][9]) {
-//    gameMap = {
-//            {"030605900"},
-//            {"098034200"},
-//            {"700000050"},
-//            {"680090400"},
-//            {"007500390"},
-//            {"005300008"},
-//            {"000926004"},
-//            {"349001672"},
-//            {"056073080"}
-//    };
-//
-//}
+void Game::genGameMap() {
+    char filename[] = "/home/ganymede/CLionProjects/cpp-learning-projects/sudoku/games/sudoku_map1.txt";
+    loadGameMapFromFile(filename, gameMap);
+    drawMap();
+}
+
+void Game::loadGameMapFromFile(char* filepath, char* gameMap) {
+    std::ifstream fin(filepath);
+    std::filebuf* pbuf = fin.rdbuf();
+
+    // get file size using buffer's members
+    std::size_t size = pbuf->pubseekoff (0,fin.end,fin.in);
+    pbuf->pubseekpos (0, fin.in);
+
+    char* tempMap = new char[size];
+    pbuf->sgetn (tempMap, size);
+    fin.close();
+
+    // TODO: figure out what to do with '\n'
+    int shift = 0; // to avoid '\n'
+    for(int i = 0; i < 81; ++i) {
+        if (tempMap[i+shift] == '\n') {
+            shift++;
+            --i;
+            continue;
+        }
+        gameMap[i] = tempMap[i+shift];
+    }
+
+    delete[] tempMap;
+}
+
+void Game::drawMap() {
+    std::map <int, std::string> nums = {
+            {1, "one"}, {2, "two"}, {3, "three"}, {4, "four"}, {5, "five"},
+            {6, "six"}, {7, "seven"}, {8, "eight"}, {9, "nine"}, {0, "zero"}
+    };
+    for(int i = 0; i < 81; ++i) {
+        int current_num = gameMap[i] - 48;
+
+        std::string text_num = nums[current_num];
+        std::string filepath = "/home/ganymede/CLionProjects/cpp-learning-projects/sudoku/assets/" + text_num + ".png";
+
+        SDL_Surface* tmpSurf = IMG_Load(filepath.c_str());
+        if(!tmpSurf) {
+            std::cerr << "Failed to load img: " << SDL_GetError() << std::endl;
+        }
+        textures[i] = SDL_CreateTextureFromSurface(rend, tmpSurf);
+        if (textures[i] == nullptr) {
+            std::cout << "Can't create texture from surface: " << SDL_GetError() << std::endl;
+        }
+        rects[i] = new SDL_Rect();
+        SDL_FreeSurface(tmpSurf);
+    }
+}

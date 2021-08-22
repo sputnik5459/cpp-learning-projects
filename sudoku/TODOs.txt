@@ -1,9 +1,0 @@
-- make simple window opening: ✔
-- implement sudoku showing in the game window:
-- implement settings manager:
-    - add windows size settings:
-- figure out how to implement sudoku solving and implement it:
-    - implement sudoku checking:
-- move sudoku solving to GUI:
-    - implement user interface:
-- add reading sudoku from file (something like sudoku1.txt with numbers map)
