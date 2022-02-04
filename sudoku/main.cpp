@@ -6,7 +6,7 @@
 int main() {
     Game *game = new Game();
 
-    game->init("Sudoku", 800, 600);
+    game->init("Sudoku", 450, 550);
 
     while(game->isRunning()) {
         game->handleEvents();

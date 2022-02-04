@@ -19,6 +19,9 @@ add_executable(sudoku
 
         Game.cpp
         Game.h
+
+        CellObject.cpp
+        CellObject.h
         )
 
 

@@ -1,4 +1,5 @@
 #include "Game.h"
+#include "CellObject.h"
 
 #include <fstream>
 #include <map>
@@ -18,6 +19,8 @@ void Game::init(const char *title, int width, int height) {
     }
     genGameMap();
     std::cout << "Game successfully init" << std::endl;
+    cursor[0] = 0;
+    cursor[1] = 0;
 }
 
 void Game::clear() {
@@ -34,11 +37,39 @@ void Game::handleEvents() {
     SDL_PollEvent(&event);
     switch(event.type) {
         case SDL_QUIT:
-        case SDL_KEYDOWN:
             gameIsRunning = false;
             break;
-        default:
-            break;
+            case SDL_KEYDOWN:
+                /*  */
+                switch (event.key.keysym.sym)
+                {
+                    case SDLK_a:
+                    case SDLK_LEFT:
+                        if (cursor[0] > 0) {
+                            cursor[0] = cursor[0] - 1;
+                        }
+                        break;
+                    case SDLK_d:
+                    case SDLK_RIGHT:
+                        if (cursor[0] < 8) {
+                            cursor[0] = cursor[0] + 1;
+                        }
+                        break;
+                    case SDLK_w:
+                    case SDLK_UP:
+                        if (cursor[1] > 0) {
+                            cursor[1] = cursor[1] - 1;
+                        }
+                        break;
+                    case SDLK_s:
+                    case SDLK_DOWN:
+                        if (cursor[1] < 8) {
+                            cursor[1] = cursor[1] + 1;
+                        }
+                        break;
+                }
+                default:
+                    break;
     }
 }
 
@@ -77,7 +108,7 @@ bool Game::isRunning() const {
 }
 
 void Game::genGameMap() {
-    char filename[] = "/home/ganymede/CLionProjects/cpp-learning-projects/sudoku/games/sudoku_map1.txt";
+    char filename[] = "/home/ganymede/CLionProjects/cpp-learning-projects/sudoku/gameMaps/sudoku_map1.txt";
     loadGameMapFromFile(filename, gameMap);
     drawMap();
 }
@@ -110,14 +141,16 @@ void Game::loadGameMapFromFile(char* filepath, char* gameMap) {
 
 void Game::drawMap() {
     std::map <int, std::string> nums = {
-            {1, "one"}, {2, "two"}, {3, "three"}, {4, "four"}, {5, "five"},
-            {6, "six"}, {7, "seven"}, {8, "eight"}, {9, "nine"}, {0, "zero"}
+            {1, "one-black"}, {2, "two-black"}, {3, "three-black"}, {4, "four-black"}, {5, "five-black"},
+            {6, "six-black"}, {7, "seven-black"}, {8, "eight-black"}, {9, "nine-black"}, {0, "empty-black"}
     };
     for(int i = 0; i < 81; ++i) {
         int current_num = gameMap[i] - 48;
 
         std::string text_num = nums[current_num];
         std::string filepath = "/home/ganymede/CLionProjects/cpp-learning-projects/sudoku/assets/" + text_num + ".png";
+        auto* cell = new CellObject();
+
 
         SDL_Surface* tmpSurf = IMG_Load(filepath.c_str());
         if(!tmpSurf) {
