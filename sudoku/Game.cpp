@@ -34,6 +34,8 @@ void Game::clear() {
 }
 
 void Game::handleEvents() {
+    int cur_cell_pos = cur_cursor[0] + (cur_cursor[1] * 9);
+
     SDL_Event event;
     SDL_PollEvent(&event);
     switch(event.type) {
@@ -79,6 +81,66 @@ void Game::handleEvents() {
                             last_cursor[0] = cur_cursor[0];
                             last_cursor[1] = cur_cursor[1];
                             cur_cursor[1] = cur_cursor[1] + 1;
+                        }
+                        break;
+
+                    case SDLK_1:
+                        if (cells[cur_cell_pos]->is_editable) {
+                            cells[cur_cell_pos]->set_and_load_number_pic(rend, 1);
+                        }
+                        break;
+
+                    case SDLK_2:
+                        if (cells[cur_cell_pos]->is_editable) {
+                            cells[cur_cell_pos]->set_and_load_number_pic(rend, 2);
+                        }
+                        break;
+
+                    case SDLK_3:
+                        if (cells[cur_cell_pos]->is_editable) {
+                            cells[cur_cell_pos]->set_and_load_number_pic(rend, 3);
+                        }
+                        break;
+
+                    case SDLK_4:
+                        if (cells[cur_cell_pos]->is_editable) {
+                            cells[cur_cell_pos]->set_and_load_number_pic(rend, 4);
+                        }
+                        break;
+
+                    case SDLK_5:
+                        if (cells[cur_cell_pos]->is_editable) {
+                            cells[cur_cell_pos]->set_and_load_number_pic(rend, 5);
+                        }
+                        break;
+
+                    case SDLK_6:
+                        if (cells[cur_cell_pos]->is_editable) {
+                            cells[cur_cell_pos]->set_and_load_number_pic(rend, 6);
+                        }
+                        break;
+
+                    case SDLK_7:
+                        if (cells[cur_cell_pos]->is_editable) {
+                            cells[cur_cell_pos]->set_and_load_number_pic(rend, 7);
+                        }
+                        break;
+
+                    case SDLK_8:
+                        if (cells[cur_cell_pos]->is_editable) {
+                            cells[cur_cell_pos]->set_and_load_number_pic(rend, 8);
+                        }
+                        break;
+
+                    case SDLK_9:
+                        if (cells[cur_cell_pos]->is_editable) {
+                            cells[cur_cell_pos]->set_and_load_number_pic(rend, 9);
+                        }
+                        break;
+
+                    case SDLK_0:
+                        if (cells[cur_cell_pos]->is_editable) {
+                            cells[cur_cell_pos]->set_and_load_number_pic(rend, 0);
                         }
                         break;
                 }
@@ -155,6 +217,7 @@ void Game::drawMap() {
     };
 
     int x_pos = 0, y_pos = 0;
+    bool is_editable;
 
     for(int i = 0; i < 81; ++i) {
         if (i % 9 == 0 && i != 0) {
@@ -164,9 +227,16 @@ void Game::drawMap() {
 
         int current_num = gameMap[i] - 48;
 
+        if (current_num == 0) {
+            is_editable = true;
+        }
+        else {
+            is_editable = false;
+        }
+
         std::string text_num = nums[current_num];
 
-        auto* cell = new CellObject(text_num, x_pos, y_pos);
+        auto* cell = new CellObject(text_num, x_pos, y_pos, is_editable);
         cell->load_pic(rend);
         cells[i] = cell;
 
