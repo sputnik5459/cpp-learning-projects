@@ -1,5 +1,4 @@
 #include "Game.h"
-#include "CellObject.h"
 
 #include <fstream>
 #include <map>
@@ -19,17 +18,19 @@ void Game::init(const char *title, int width, int height) {
     }
     genGameMap();
     std::cout << "Game successfully init" << std::endl;
-    cursor[0] = 0;
-    cursor[1] = 0;
+    cur_cursor[0] = 0;
+    cur_cursor[1] = 0;
+    last_cursor[0] = -1;
+    last_cursor[1] = -1;
 }
 
 void Game::clear() {
+    for (int i = 0; i < 81; ++i) {
+        cells[i]->clear();
+    }
     SDL_DestroyWindow(win);
     SDL_DestroyRenderer(rend);
     SDL_Quit();
-    for (int i = 0; i < 81; ++i) {
-        SDL_DestroyTexture(textures[i]);
-    }
 }
 
 void Game::handleEvents() {
@@ -40,31 +41,44 @@ void Game::handleEvents() {
             gameIsRunning = false;
             break;
             case SDL_KEYDOWN:
-                /*  */
                 switch (event.key.keysym.sym)
                 {
                     case SDLK_a:
                     case SDLK_LEFT:
-                        if (cursor[0] > 0) {
-                            cursor[0] = cursor[0] - 1;
+                        if (cur_cursor[0] > 0) {
+                            last_cursor[0] = cur_cursor[0];
+                            last_cursor[1] = cur_cursor[1];
+                            cur_cursor[0] = cur_cursor[0] - 1;
                         }
                         break;
+
+
                     case SDLK_d:
                     case SDLK_RIGHT:
-                        if (cursor[0] < 8) {
-                            cursor[0] = cursor[0] + 1;
+                        if (cur_cursor[0] < 8) {
+                            last_cursor[0] = cur_cursor[0];
+                            last_cursor[1] = cur_cursor[1];
+                            cur_cursor[0] = cur_cursor[0] + 1;
                         }
                         break;
+
+
                     case SDLK_w:
                     case SDLK_UP:
-                        if (cursor[1] > 0) {
-                            cursor[1] = cursor[1] - 1;
+                        if (cur_cursor[1] > 0) {
+                            last_cursor[0] = cur_cursor[0];
+                            last_cursor[1] = cur_cursor[1];
+                            cur_cursor[1] = cur_cursor[1] - 1;
                         }
                         break;
+
+
                     case SDLK_s:
                     case SDLK_DOWN:
-                        if (cursor[1] < 8) {
-                            cursor[1] = cursor[1] + 1;
+                        if (cur_cursor[1] < 8) {
+                            last_cursor[0] = cur_cursor[0];
+                            last_cursor[1] = cur_cursor[1];
+                            cur_cursor[1] = cur_cursor[1] + 1;
                         }
                         break;
                 }
@@ -74,22 +88,17 @@ void Game::handleEvents() {
 }
 
 void Game::update() {
-    int x_pos = 0;
-    int y_pos = 0;
+    if (cur_cursor[0] != last_cursor[0] || cur_cursor[1] != last_cursor[1]) {
 
-    for (int i = 0; i < 81; ++i) {
-        if (i % 9 == 0 && i != 0) {
-            x_pos = 0;
-            y_pos += 50;
+        if (last_cursor[0] >= 0 && last_cursor[1] >= 0) {
+            int last_cell_pos = last_cursor[0] + (last_cursor[1] * 9);
+            cells[last_cell_pos]->revert_cell(rend);
         }
 
-        rects[i]->w = 50;
-        rects[i]->h = 50;
-
-        rects[i]->x = x_pos;
-        rects[i]->y = y_pos;
-
-        x_pos += 50;
+        int cur_cell_pos = cur_cursor[0] + (cur_cursor[1] * 9);
+        cells[cur_cell_pos]->revert_cell(rend);
+        last_cursor[0] = cur_cursor[0];
+        last_cursor[1] = cur_cursor[1];
     }
 }
 
@@ -97,7 +106,7 @@ void Game::render() {
     SDL_RenderClear(rend);
 
     for (int i = 0; i < 81; ++i) {
-        SDL_RenderCopy(rend, textures[i], nullptr, rects[i]);
+        SDL_RenderCopy(rend, cells[i]->texture, nullptr, cells[i]->rect);
     }
 
     SDL_RenderPresent(rend);
@@ -119,7 +128,7 @@ void Game::loadGameMapFromFile(char* filepath, char* gameMap) {
 
     // get file size using buffer's members
     std::size_t size = pbuf->pubseekoff (0,fin.end,fin.in);
-    pbuf->pubseekpos (0, fin.in);
+    pbuf->pubseekpos(0, fin.in);
 
     char* tempMap = new char[size];
     pbuf->sgetn (tempMap, size);
@@ -144,23 +153,23 @@ void Game::drawMap() {
             {1, "one-black"}, {2, "two-black"}, {3, "three-black"}, {4, "four-black"}, {5, "five-black"},
             {6, "six-black"}, {7, "seven-black"}, {8, "eight-black"}, {9, "nine-black"}, {0, "empty-black"}
     };
+
+    int x_pos = 0, y_pos = 0;
+
     for(int i = 0; i < 81; ++i) {
+        if (i % 9 == 0 && i != 0) {
+            x_pos = 0;
+            y_pos += 50;
+        }
+
         int current_num = gameMap[i] - 48;
 
         std::string text_num = nums[current_num];
-        std::string filepath = "/home/ganymede/CLionProjects/cpp-learning-projects/sudoku/assets/" + text_num + ".png";
-        auto* cell = new CellObject();
 
+        auto* cell = new CellObject(text_num, x_pos, y_pos);
+        cell->load_pic(rend);
+        cells[i] = cell;
 
-        SDL_Surface* tmpSurf = IMG_Load(filepath.c_str());
-        if(!tmpSurf) {
-            std::cerr << "Failed to load img: " << SDL_GetError() << std::endl;
-        }
-        textures[i] = SDL_CreateTextureFromSurface(rend, tmpSurf);
-        if (textures[i] == nullptr) {
-            std::cout << "Can't create texture from surface: " << SDL_GetError() << std::endl;
-        }
-        rects[i] = new SDL_Rect();
-        SDL_FreeSurface(tmpSurf);
+        x_pos += 50;
     }
 }

@@ -28,8 +28,7 @@ private:
     char gameMap[82];
     char userMap[82];
     // TODO: think about map and sizeOf iteration..
-    SDL_Texture *textures[82];
     CellObject *cells[82];
-    SDL_Rect *rects[82];
-    int cursor[2];
+    int cur_cursor[2];
+    int last_cursor[2];
 };
